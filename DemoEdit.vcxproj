@@ -135,14 +135,14 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level1</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;__STDC_LIMIT_MACROS;X64BITS;WIN32;COMPILER_MSVC;COMPILER_MSVC64;_CRT_NO_VA_START_VALIDATION;_ITERATOR_DEBUG_LEVEL=0;CS2Fixes_EXPORTS;_WINDOWS;_USRDLL;META_IS_SOURCE2;SUBHOOK_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>vendor/protobuf/generated;protobuf/generated;utils;cs2_sdk;E:\Projekty\CSGO\cs2\Shared\sdk/public;E:\Projekty\CSGO\cs2\Shared\sdk/public/tier0;E:\Projekty\CSGO\cs2\Shared\sdk/game/shared;E:\Projekty\CSGO\cs2\Shared\sdk/game/server;E:\Projekty\CSGO\cs2\Shared\sdk/public/tier1;E:\Projekty\CSGO\cs2\Shared\sdk/public/mathlib;minhook/include;E:\Projekty\CSGO\cs2\Shared\metamod-source/core;E:\Projekty\CSGO\cs2\Shared\metamod-source/core/sourcehook;vendor/subhook;vendor/funchook/include;E:\Projekty\CSGO\cs2\Shared\sdk/public/entity2;E:\Projekty\CSGO\cs2\Shared\sdk/public/game/server;vendor/protobuf-3.21.8/src;$(SolutionDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>vendor/protobuf/generated;protobuf/generated;utils;cs2_sdk;sdk/public;sdk/public/tier0;sdk/game/shared;sdk/game/server;sdk/public/tier1;sdk/public/mathlib;minhook/include;$(MMSOURCE20)\core;$(MMSOURCE20)\core\sourcehook;vendor/subhook;vendor/funchook/include;sdk/public/entity2;sdk/public/game/server;$(SolutionDir);sdk/thirdparty/protobuf-3.21.8/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -151,13 +151,13 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>../Shared/sdk/lib/public/win64;vendor/funchook/lib/Release;packages\v8-v143-x64.13.0.245.25\lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>sdk/lib/public/win64;vendor/funchook/lib/Release;packages\v8-v143-x64.13.0.245.25\lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>interfaces.lib;mathlib.lib;tier0.lib;tier1.lib;psapi.lib;funchook.lib;distorm.lib;steam_api64.lib;vendor/protobuf-lib/Debug/libprotobufd.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Shared\sdk\public\tier0\memoverride.cpp" />
-    <ClCompile Include="..\Shared\sdk\tier1\convar.cpp" />
+    <ClCompile Include="sdk\public\tier0\memoverride.cpp" />
+    <ClCompile Include="sdk\tier1\convar.cpp" />
     <ClCompile Include="binutils.cpp" />
     <ClCompile Include="cs2_sdk\schema.cpp" />
     <ClCompile Include="ctimer.cpp">
