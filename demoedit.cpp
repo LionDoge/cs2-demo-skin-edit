@@ -378,36 +378,11 @@ void ApplyTargetPlayerSkins()
 			if (xuid != plr->m_steamID())
 				continue;
 
-			int32_t newPaintKit = -1;
-			if (skinReplacementMap.contains(defindex))
-			{
-				auto sceneNode = currentWep->m_CBodyComponent()->m_pSceneNode();
-				if (sceneNode)
-				{
-					if (g_mapLegacyModelSkins.contains(newPaintKit))
-					{
-						if (defindex == activeDefIndex)
-						{
-							isActiveWeaponLegacy = g_mapLegacyModelSkins[newPaintKit];
-						}
-						CSkeletonInstance* skel = (CSkeletonInstance*)sceneNode;
-						skel->m_modelState().m_MeshGroupMask() = g_mapLegacyModelSkins[newPaintKit] ? 1 : 2;
-						g_pfnSetMeshGroupMask(sceneNode, g_mapLegacyModelSkins[newPaintKit] ? 1 : 2);
-					}
-				}
-				newPaintKit = skinReplacementMap[defindex];
-				currentWep->m_nFallbackPaintKit() = newPaintKit;
-				currentWep->m_flFallbackWear() = 0.1f;
-				currentWep->m_nFallbackSeed() = 0;
-			}
-
 			if (defindex < 500 && !g_bDontRemoveAttributes) { // not a knife (likely)
 				pWeaponItemView->m_iEntityQuality() = 0;
 			}
-			currentWep->m_fFlags() |= EF_IS_PRE_SPAWN;
-			pWeaponItemView->m_bIsStoreItem() = true;
-			pWeaponItemView->m_iItemIDLow() = -1;
-			pWeaponItemView->m_iItemIDHigh() = -1;
+			//currentWep->m_fFlags() |= EF_IS_PRE_SPAWN;
+			
 
 			auto attrs = pWeaponItemView->m_NetworkedDynamicAttributes.Get()->m_Attributes.Get();
 			if (defindex < 500)
@@ -418,12 +393,6 @@ void ApplyTargetPlayerSkins()
 					// from items_game.txt
 					// stickers stuff is between these ids
 					// removing stattrak "kill eater" will cause crashes when someone gets a kill with that weapon.
-					if (attr.m_iAttributeDefinitionIndex == 6
-						|| attr.m_iAttributeDefinitionIndex == 7
-						|| attr.m_iAttributeDefinitionIndex == 8) // paint kit stuff
-					{
-						continue;
-					}
 					if (
 						!(attr.m_iAttributeDefinitionIndex >= 80 && attr.m_iAttributeDefinitionIndex <= 89))
 					{
@@ -431,6 +400,33 @@ void ApplyTargetPlayerSkins()
 					}
 				}
 			}
+
+			int32_t newPaintKit = -1;
+			if (skinReplacementMap.contains(defindex))
+			{
+				newPaintKit = skinReplacementMap[defindex];
+				auto sceneNode = currentWep->m_CBodyComponent()->m_pSceneNode();
+				if (sceneNode)
+				{
+					if (g_mapLegacyModelSkins.contains(newPaintKit))
+					{
+						if (defindex == activeDefIndex)
+						{
+							isActiveWeaponLegacy = g_mapLegacyModelSkins[newPaintKit];
+						}
+						CSkeletonInstance* skel = (CSkeletonInstance*)sceneNode;
+						//skel->m_modelState().m_MeshGroupMask() = g_mapLegacyModelSkins[newPaintKit] ? 2 : 1;
+						g_pfnSetMeshGroupMask(sceneNode, g_mapLegacyModelSkins[newPaintKit] ? 2 : 1);
+					}
+				}
+				currentWep->m_nFallbackPaintKit() = newPaintKit;
+				currentWep->m_flFallbackWear() = 0.1f;
+				currentWep->m_nFallbackSeed() = 0;
+			}
+
+			pWeaponItemView->m_iItemIDLow() = -1;
+			pWeaponItemView->m_iItemIDHigh() = -1;
+
 			if (!g_bDontRemoveAttributes)
 				pWeaponItemView->m_NetworkedDynamicAttributes()->m_Attributes.Get()->RemoveAll();
 
@@ -439,8 +435,6 @@ void ApplyTargetPlayerSkins()
 				g_pfnAddOrSetItemAttrib(pWeaponItemView->m_NetworkedDynamicAttributes.Get(), "set item texture prefab", newPaintKit);
 				g_pfnAddOrSetItemAttrib(pWeaponItemView->m_NetworkedDynamicAttributes.Get(), "set item texture seed", 0.0f);
 				g_pfnAddOrSetItemAttrib(pWeaponItemView->m_NetworkedDynamicAttributes.Get(), "set item texture wear", 0.1f);
-
-				
 			}
 
 			pWeaponItemView->m_bDisallowSOC() = false;
@@ -463,11 +457,11 @@ void ApplyTargetPlayerSkins()
 					{
 						auto ownerOfViewModelHandle = ownerOfChild->m_hOwnerEntity();
 						auto ownerOfViewModel = g_pfnGetEntityFromIndex(*g_pEntityList, ownerOfViewModelHandle.GetEntryIndex());
-						//if (ownerOfViewModel == activeWep)
+						if (ownerOfViewModel == activeWep)
 						{
-							CSkeletonInstance* skel = (CSkeletonInstance*)sceneNode;
-							skel->m_modelState().m_MeshGroupMask() = isActiveWeaponLegacy ? 1 : 2;
-							g_pfnSetMeshGroupMask(sceneNode, isActiveWeaponLegacy ? 1 : 2);
+							CSkeletonInstance* skel = (CSkeletonInstance*)childSceneNode;
+							//skel->m_modelState().m_MeshGroupMask() = isActiveWeaponLegacy ? 2 : 1;
+							g_pfnSetMeshGroupMask(childSceneNode, isActiveWeaponLegacy ? 2 : 1);
 						}
 					}
 
@@ -536,7 +530,7 @@ void RemoveAllWeaponStickersForPlayer(CCSPlayerController* plr)
 
 void Hook_FrameStageNotify(ClientFrameStage_t stage)
 {
-	if (stage == FRAME_NET_UPDATE_POSTDATAUPDATE_START)
+	if (stage == FRAME_RENDER_END)
 	{
 		ApplyTargetPlayerSkins();
 	}
