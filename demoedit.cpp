@@ -180,6 +180,64 @@ CEconItemAttribute* FindAttributeByIndex(CUtlVector<CEconItemAttribute>& attrs, 
 	return nullptr;
 }
 
+std::optional<float> customWearValue = std::nullopt;
+std::optional<int16_t> customSeedValue = std::nullopt;
+std::optional<uint16_t> customGloveDefIdx = std::nullopt;
+
+CON_COMMAND_F(setgloves, "", FCVAR_LINKED_CONCOMMAND)
+{
+	if (args.ArgC() < 2)
+	{
+		Msg("Usage: setgloves <defindex> (set -1 to remove override)");
+		return;
+	}
+
+	int defIndex = V_atoi(args[1]);
+	if (defIndex < -1)
+	{
+		customGloveDefIdx = {};
+		return;
+	}
+
+	customGloveDefIdx = defIndex;
+}
+
+CON_COMMAND_F(setwear, "", FCVAR_LINKED_CONCOMMAND)
+{
+	if (args.ArgC() < 2)
+	{
+		Msg("Usage: setwear <wear> (set -1 to remove override)");
+		return;
+	}
+
+	float wear = V_atof(args[1]);
+	if (wear < -1)
+	{
+		customWearValue = {};
+		return;
+	}
+
+	customWearValue = wear;
+}
+
+CON_COMMAND_F(setseed, "", FCVAR_LINKED_CONCOMMAND)
+{
+	if (args.ArgC() < 2)
+	{
+		Msg("Usage: setseed <seed> (set -1 to remove override)");
+		return;
+	}
+
+	int16_t seed = V_atoi(args[1]);
+	if (seed < -1)
+	{
+		customSeedValue = {};
+		return;
+	}
+
+	customSeedValue = seed;
+}
+
 CON_COMMAND_F(addskin, "", FCVAR_LINKED_CONCOMMAND)
 {
 	if (args.ArgC() < 3)
@@ -208,76 +266,77 @@ CON_COMMAND_F(remskin, "", FCVAR_LINKED_CONCOMMAND)
 	skinReplacementMap.erase(weaponIdx);
 }
 
-CON_COMMAND_F(addkeychain, "", FCVAR_LINKED_CONCOMMAND)
-{
-	auto plr = (CCSPlayerController*)g_pfnGetEntityFromIndex(*g_pEntityList, 1);
-	if(!plr)
-	{
-		Msg("No player found!\n");
-		return;
-	}
-	auto pawnHandle = plr->m_hPlayerPawn.Get();
-	auto pawn = (C_CSPlayerPawn*)g_pfnGetEntityFromIndex(*g_pEntityList, pawnHandle.GetEntryIndex());
-	if (!pawn)
-	{
-		Msg("No pawn found!\n");
-		return;
-	}
-	auto wepServices = pawn->m_pWeaponServices.Get();
-	if (!wepServices)
-	{
-		Msg("No weapon services found!\n");
-		return;
-	}
-	auto wepHandle = wepServices->m_hActiveWeapon.Get();
-	auto wep = (C_CSWeaponBase*)g_pfnGetEntityFromIndex(*g_pEntityList, wepHandle.GetEntryIndex());
-	if (!wep)
-	{
-		Msg("No weapon found!\n");
-		return;
-	}
-	g_pfnAddKeychain(wep, wep->m_AttributeManager->m_Item(), false);
-}
+//CON_COMMAND_F(addkeychain, "", FCVAR_LINKED_CONCOMMAND)
+//{
+//	auto plr = (CCSPlayerController*)g_pfnGetEntityFromIndex(*g_pEntityList, 1);
+//	if(!plr)
+//	{
+//		Msg("No player found!\n");
+//		return;
+//	}
+//	auto pawnHandle = plr->m_hPlayerPawn.Get();
+//	auto pawn = (C_CSPlayerPawn*)g_pfnGetEntityFromIndex(*g_pEntityList, pawnHandle.GetEntryIndex());
+//	if (!pawn)
+//	{
+//		Msg("No pawn found!\n");
+//		return;
+//	}
+//	auto wepServices = pawn->m_pWeaponServices.Get();
+//	if (!wepServices)
+//	{
+//		Msg("No weapon services found!\n");
+//		return;
+//	}
+//	auto wepHandle = wepServices->m_hActiveWeapon.Get();
+//	auto wep = (C_CSWeaponBase*)g_pfnGetEntityFromIndex(*g_pEntityList, wepHandle.GetEntryIndex());
+//	if (!wep)
+//	{
+//		Msg("No weapon found!\n");
+//		return;
+//	}
+//	g_pfnAddKeychain(wep, wep->m_AttributeManager->m_Item(), false);
+//}
 
-CON_COMMAND_F(changekeychainid, "", FCVAR_LINKED_CONCOMMAND)
-{
-	if (args.ArgC() < 2)
-	{
-		return;
-	}
-	int newId = V_atoi(args[1]);
-	auto plr = (CCSPlayerController*)g_pfnGetEntityFromIndex(*g_pEntityList, 1);
-	if (!plr)
-	{
-		Msg("No player found!\n");
-		return;
-	}
-	auto pawnHandle = plr->m_hPlayerPawn.Get();
-	auto pawn = (C_CSPlayerPawn*)g_pfnGetEntityFromIndex(*g_pEntityList, pawnHandle.GetEntryIndex());
-	if (!pawn)
-	{
-		Msg("No pawn found!\n");
-		return;
-	}
-	auto wepServices = pawn->m_pWeaponServices.Get();
-	if (!wepServices)
-	{
-		Msg("No weapon services found!\n");
-		return;
-	}
-	auto wepHandle = wepServices->m_hActiveWeapon.Get();
-	auto wep = (C_CSWeaponBase*)g_pfnGetEntityFromIndex(*g_pEntityList, wepHandle.GetEntryIndex());
-	if (!wep)
-	{
-		Msg("No weapon found!\n");
-		return;
-	}
-	auto attrsList = wep->m_AttributeManager->m_Item()->m_NetworkedDynamicAttributes.Get();
-	g_pfnAddOrSetItemAttrib(attrsList, "keychain slot 0 id", newId);
-	g_pfnAddOrSetItemAttrib(attrsList, "keychain slot 0 offset x", 0);
-	g_pfnAddOrSetItemAttrib(attrsList, "keychain slot 0 offset y", 0);
-	g_pfnAddOrSetItemAttrib(attrsList, "keychain slot 0 offset z", 0);
-}
+//CON_COMMAND_F(setkeychain, "", FCVAR_LINKED_CONCOMMAND)
+//{
+//	if (args.ArgC() < 2)
+//	{
+//		return;
+//	}
+//	int newId = V_atoi(args[1]);
+//	auto plr = (CCSPlayerController*)g_pfnGetEntityFromIndex(*g_pEntityList, 1);
+//	if (!plr)
+//	{
+//		Msg("No player found!\n");
+//		return;
+//	}
+//	auto pawnHandle = plr->m_hPlayerPawn.Get();
+//	auto pawn = (C_CSPlayerPawn*)g_pfnGetEntityFromIndex(*g_pEntityList, pawnHandle.GetEntryIndex());
+//	if (!pawn)
+//	{
+//		Msg("No pawn found!\n");
+//		return;
+//	}
+//	auto wepServices = pawn->m_pWeaponServices.Get();
+//	if (!wepServices)
+//	{
+//		Msg("No weapon services found!\n");
+//		return;
+//	}
+//	auto wepHandle = wepServices->m_hActiveWeapon.Get();
+//	auto wep = (C_CSWeaponBase*)g_pfnGetEntityFromIndex(*g_pEntityList, wepHandle.GetEntryIndex());
+//	if (!wep)
+//	{
+//		Msg("No weapon found!\n");
+//		return;
+//	}
+//	auto attrsList = wep->m_AttributeManager->m_Item()->m_NetworkedDynamicAttributes.Get();
+//	g_pfnAddOrSetItemAttrib(attrsList, "keychain slot 0 id", newId);
+//	g_pfnAddOrSetItemAttrib(attrsList, "keychain slot 0 offset x", 0);
+//	g_pfnAddOrSetItemAttrib(attrsList, "keychain slot 0 offset y", 0);
+//	g_pfnAddOrSetItemAttrib(attrsList, "keychain slot 0 offset z", 0);
+//	g_pfnAddKeychain(wep, wep->m_AttributeManager->m_Item(), false);
+//}
 
 bool g_nameSwapEnabled = false;
 int g_iTargetPlayerId = 1;
@@ -420,8 +479,8 @@ void ApplyTargetPlayerSkins()
 					}
 				}
 				currentWep->m_nFallbackPaintKit() = newPaintKit;
-				currentWep->m_flFallbackWear() = 0.1f;
-				currentWep->m_nFallbackSeed() = 0;
+				currentWep->m_flFallbackWear() = customWearValue.value_or(0.0f);
+				currentWep->m_nFallbackSeed() = customSeedValue.value_or(0.0f);
 			}
 
 			pWeaponItemView->m_iItemIDLow() = -1;
@@ -433,8 +492,8 @@ void ApplyTargetPlayerSkins()
 			if (newPaintKit != -1)
 			{
 				g_pfnAddOrSetItemAttrib(pWeaponItemView->m_NetworkedDynamicAttributes.Get(), "set item texture prefab", newPaintKit);
-				g_pfnAddOrSetItemAttrib(pWeaponItemView->m_NetworkedDynamicAttributes.Get(), "set item texture seed", 0.0f);
-				g_pfnAddOrSetItemAttrib(pWeaponItemView->m_NetworkedDynamicAttributes.Get(), "set item texture wear", 0.1f);
+				g_pfnAddOrSetItemAttrib(pWeaponItemView->m_NetworkedDynamicAttributes.Get(), "set item texture seed", customSeedValue.value_or(0.0f));
+				g_pfnAddOrSetItemAttrib(pWeaponItemView->m_NetworkedDynamicAttributes.Get(), "set item texture wear", customWearValue.value_or(0.0f));
 			}
 
 			pWeaponItemView->m_bDisallowSOC() = false;
@@ -470,18 +529,21 @@ void ApplyTargetPlayerSkins()
 			}
 		}
 		
-		//C_EconItemView* gloves = pawn->m_EconGloves();
-		//if (gloves != nullptr)
-		//{
-		//	gloves->m_iEntityQuality() = 0;
-		//	gloves->m_iEntityLevel() = 1;
-		//	gloves->m_iItemDefinitionIndex() = 5028; // default t gloves.
-		//	gloves->m_iItemIDHigh() = (16384 & 0xFFFFFFFF) >> 32;
-		//	gloves->m_iItemIDLow() = 16384 & 0xFFFFFFFF;
-		//	gloves->m_iAccountID() = 76561198130701252;
-		//	gloves->m_bInitialized() = true;
-		//	pawn->m_bNeedToReApplyGloves() = true;
-		//}
+		if (customGloveDefIdx.has_value())
+		{
+			C_EconItemView* gloves = pawn->m_EconGloves();
+			if (gloves != nullptr)
+			{
+				gloves->m_iEntityQuality() = 0;
+				gloves->m_iEntityLevel() = 1;
+				gloves->m_iItemDefinitionIndex() = *customGloveDefIdx;
+				gloves->m_iAccountID() = -1;
+				gloves->m_iItemIDHigh() = (16384 & 0xFFFFFFFF) >> 32;
+				gloves->m_iItemIDLow() = 16384 & 0xFFFFFFFF;
+				gloves->m_bInitialized() = true;
+				pawn->m_bNeedToReApplyGloves() = true; // neeeded?
+			}
+		}
 		
 	}
 }
