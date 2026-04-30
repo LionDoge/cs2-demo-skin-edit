@@ -54,16 +54,28 @@ ISource2EngineToClient* g_pEngineToClient = nullptr;
 	funchook_prepare(funchookHandle, (void**)(&originalFunction), reinterpret_cast<void*>(hookedFunction)); \
 	funchook_install(funchookHandle, 0);
 
+enum ClientFrameStage_t : int
+{
+	FRAME_UNDEFINED = -1,
+	FRAME_START,
+	FRAME_NET_UPDATE_START,
+	FRAME_NET_UPDATE_POSTDATAUPDATE_START,
+	FRAME_NET_UPDATE_POSTDATAUPDATE_END,
+	FRAME_NET_UPDATE_END,
+	FRAME_RENDER_START,
+	FRAME_RENDER_END
+};
+
 class GameSessionConfiguration_t { };
 SH_DECL_HOOK3_void(IServerGameDLL, GameFrame, SH_NOATTRIB, 0, bool, bool, bool);
 SH_DECL_HOOK4_void(IServerGameClients, ClientPutInServer, SH_NOATTRIB, 0, CPlayerSlot, char const*, int, uint64);
 SH_DECL_HOOK3_void(INetworkServerService, StartupServer, SH_NOATTRIB, 0, const GameSessionConfiguration_t&, ISource2WorldSession*, const char*);
 SH_DECL_HOOK2(IGameEventManager2, LoadEventsFromFile, SH_NOATTRIB, 0, int, const char*, bool);
 SH_DECL_HOOK3(IGameEventManager2, AddListener, SH_NOATTRIB, 0, bool, IGameEventListener2*, const char*, bool);
-SH_DECL_MANUALHOOK1_void(HK_FrameStageNotify, 36, 0, 0, int);
 SH_DECL_HOOK8_void(IGameEventSystem, PostEventAbstract, SH_NOATTRIB, 0, CSplitScreenSlot, bool, int, 
 	const uint64*, INetworkMessageInternal*, const CNetMessage*, unsigned long, NetChannelBufType_t);
 SH_DECL_MANUALHOOK2(HK_FireEventClientSide, 8, 0, 0, bool, IGameEvent*, bool)
+SH_DECL_MANUALHOOK1_void(HK_FrameStageNotify, 36, 0, 0, ClientFrameStage_t);
 SH_DECL_MANUALHOOK1(HK_SetGlobals, 11, 0, 0, void*, void*)
 SH_DECL_HOOK1_void(CEntityInstance, PostDataUpdate, SH_NOATTRIB, 0, int)
 // offset sourced from: https://github.com/advancedfx/advancedfx/blob/9cba9eaa5cc73202e9c9841ab886dc796294a4a6/AfxHookSource2/ClientEntitySystem.cpp#L370
@@ -522,6 +534,15 @@ void RemoveAllWeaponStickersForPlayer(CCSPlayerController* plr)
 	}
 }
 
+void Hook_FrameStageNotify(ClientFrameStage_t stage)
+{
+	if (stage == FRAME_NET_UPDATE_POSTDATAUPDATE_START)
+	{
+		ApplyTargetPlayerSkins();
+	}
+	RETURN_META(MRES_IGNORED);
+}
+
 void Hook_PostDataUpdate(int updateType)
 {
 	ApplyTargetPlayerSkins();
@@ -530,11 +551,11 @@ void Hook_PostDataUpdate(int updateType)
 
 void* Hook_OnAddEntity(CEntityInstance* ent, uint32_t handle)
 {
-	if (ent && ent->GetEntityIndex() == g_iTargetPlayerId)
+	/*if (ent && ent->GetEntityIndex() == g_iTargetPlayerId)
 	{
 		Msg("Hooked target player entity instance created!\n");
 		SH_ADD_HOOK(CEntityInstance, PostDataUpdate, ent, Hook_PostDataUpdate, false);
-	}
+	}*/
 	RETURN_META_VALUE(MRES_IGNORED, nullptr);
 }
 
@@ -610,18 +631,6 @@ void ApplyPlayerNamesSequential(int skipId);
 constexpr auto KNIFE_MODEL_T = "weapons/models/knife/knife_default_t/weapon_knife_default_t.vmdl";
 constexpr auto KNIFE_MODEL_CT = "weapons/models/knife/knife_default_ct/weapon_knife_default_ct.vmdl";
 
-enum ClientFrameStage_t : int
-{
-	FRAME_UNDEFINED = -1,
-	FRAME_START,
-	FRAME_NET_UPDATE_START,
-	FRAME_NET_UPDATE_POSTDATAUPDATE_START,
-	FRAME_NET_UPDATE_POSTDATAUPDATE_END,
-	FRAME_NET_UPDATE_END,
-	FRAME_RENDER_START,
-	FRAME_RENDER_END
-};
-
 CON_COMMAND_F(hook_postdataupd, "", FCVAR_LINKED_CONCOMMAND | FCVAR_SPONLY)
 {
 	auto plr = g_pfnGetEntityFromIndex(*g_pEntityList, g_iTargetPlayerId);
@@ -670,8 +679,8 @@ bool DemoEditPlugin::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen
 	SH_ADD_HOOK(IGameEventSystem, PostEventAbstract, g_gameEventSystem, SH_MEMBER(this, &DemoEditPlugin::Hook_PostEvent), false);
 	//SH_ADD_MANUALHOOK(HK_LevelInitPreEntity, g_pSource2Client, Hook_LevelInitPreEntity, false);
 
-	// Hook GlobalVars to get global vars
-	SH_ADD_MANUALHOOK(HK_SetGlobals, g_pSource2Client, Hook_SetGlobals, false);
+	//SH_ADD_MANUALHOOK(HK_SetGlobals, g_pSource2Client, Hook_SetGlobals, false);
+	SH_ADD_MANUALHOOK(HK_FrameStageNotify, g_pSource2Client, Hook_FrameStageNotify, false);
 
 	// Find FireEventClientSide and hook.
 	/*void** gameEvetManagerVtbl = (void**)g_clientModule->FindVirtualTable("CGameEventManager");
@@ -743,11 +752,11 @@ bool DemoEditPlugin::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen
 		}
 	}
 
-	if (g_pEntityList && *g_pEntityList)
+	/*if (g_pEntityList && *g_pEntityList)
 	{
 		void** vtable = **(void****)g_pEntityList;
 		SH_ADD_MANUALDVPHOOK(HK_OnAddEntity, vtable, Hook_OnAddEntity, true);
-	}
+	}*/
 
 	UnlockConCommands();
 	UnlockConVars();
@@ -859,6 +868,14 @@ bool DemoEditPlugin::Unload(char *error, size_t maxlen)
 {
 	SH_REMOVE_HOOK(INetworkServerService, StartupServer, g_pNetworkServerService, SH_MEMBER(this, &DemoEditPlugin::Hook_StartupServer), true);
 	SH_REMOVE_HOOK(IServerGameClients, ClientPutInServer, g_pSource2GameClients, SH_MEMBER(this, &DemoEditPlugin::Hook_ClientPutInServer), true);
+	//SH_REMOVE_MANUALHOOK(HK_SetGlobals, g_pSource2Client, Hook_SetGlobals, false);
+	SH_REMOVE_MANUALHOOK(HK_FrameStageNotify, g_pSource2Client, Hook_FrameStageNotify, false);
+
+	/*if (g_pEntityList && *g_pEntityList)
+	{
+		void** vtable = **(void****)g_pEntityList;
+		SH_REMOVE_MANUALHOOK(HK_OnAddEntity, vtable, Hook_OnAddEntity, true);
+	}*/
 	ConVar_Unregister();
 	funchook_uninstall(g_fHookLoadPaintKit, 0);
 	return true;
@@ -939,7 +956,7 @@ const char *DemoEditPlugin::GetDate()
 
 const char *DemoEditPlugin::GetLogTag()
 {
-	return "MultiWeaponPlugin";
+	return "DemoEdit";
 }
 
 const char *DemoEditPlugin::GetAuthor()
